@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.demo.steps.entities.Task;
+import com.demo.steps.service.TaskS2Service;
+import com.demo.steps.service.TaskS3Service;
 
-import org.springframework.boot.autoconfigure.info.ProjectInfoProperties.Build;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,32 +22,29 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RestController
-@RequestMapping("/steps/01/tasks")
-public class Tasks1Controller {
-	private final List<Task> taskList=new ArrayList<>();
+@RequestMapping("/steps/03/tasks")
+public class Tasks3Controller {
+
+	private final TaskS3Service service;
+
+	public Tasks3Controller(@Autowired TaskS3Service service){
+		this.service=service;
+	}
 
     @GetMapping("")
 	public ResponseEntity<List<Task>> fetchAllTask(){
-		return ResponseEntity.ok().body(taskList);
+		return ResponseEntity.ok().body(service.getAllTask());
 	}
 
 	@PostMapping("")
 	public ResponseEntity<Task> postTask(@RequestBody Task newTask){
-		newTask.setActive(false);
-		newTask.setCreatedAt(LocalDateTime.now());
-		long id= taskList.size()+1;
-		newTask.setId(id);
-		taskList.add(newTask);
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(newTask);
+		return ResponseEntity.status(HttpStatus.CREATED).body(service.saveTask(newTask));
     }
 
+	
 	@GetMapping("/{taskId}")
 	public ResponseEntity<Task> fetchTaskById(@PathVariable("taskId") Long taskId){
-		return taskList
-			.stream()
-			.filter(current->taskId==current.getId())
-			.findFirst()
+		return service.getTaskById(taskId)
 			.map(task-> ResponseEntity.ok().body(task))
 			.orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
 	}
@@ -53,27 +52,20 @@ public class Tasks1Controller {
 
 	@DeleteMapping("/{taskId}]")
 	public ResponseEntity<?> deleteTask(@PathVariable("taskId") Long taskId){
-		return taskList
-			.stream()
-			.filter(current->taskId==current.getId())
-			.findFirst()
-			.map(task-> {
-				taskList.remove(task);
-				return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-			})
-			.orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+		boolean isDeleted=service.deleteTask(taskId);
+		if(isDeleted){
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		}else{
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+	
 	}
 
 	
 	@PutMapping("/{taskId}]")
 	public ResponseEntity<Task> putTask(@PathVariable("taskId") Long taskId,@RequestBody Task updatedTask){
-		return taskList
-			.stream()
-			.filter(current->taskId==current.getId())
-			.findFirst()
+		return service.updateTask(taskId,updatedTask)
 			.map(task-> {
-				task.setTitle(updatedTask.getTitle());
-				task.setDescription(updatedTask.getDescription());
 				return ResponseEntity.ok().body(task);
 			})
 			.orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());

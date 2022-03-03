@@ -1,14 +1,36 @@
 package com.demo.steps.entities;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import javax.persistence.*;
+
+
+
+@Entity
+@Table(name="tasks")
 public class Task {
+
+    @Id
+    @Column(name="id")
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name="title")
     private String title;
+
+    @Column(name="description")
     private String description;
+
+    @Column(name="is_active")
     private Boolean active;
+
+    @Column(name="owner_id")
+    private String ownerId;
+
+    @Column(name="created_at")
     private LocalDateTime createdAt;
+
+    @Column(name="updated_at")
     private LocalDateTime updatedAt;
     
     public Boolean getActive() {
